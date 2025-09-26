@@ -1,15 +1,22 @@
-'use client'
+"use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase, getUserProfile } from "../lib/supabase"
+import {
+	supabase,
+	getUserProfile,
+	getUserAccount,
+	getSiteUrl,
+} from "../lib/supabase"
 import type { User } from "@supabase/supabase-js"
 import type { Database } from "../types/supabase"
 
 type TdrApplication = Database["public"]["Tables"]["tdr_applications"]["Row"]
+type UserAccount = Database["public"]["Tables"]["user_accounts"]["Row"]
 
 interface AuthContextType {
 	user: User | null
 	userProfile: TdrApplication | null
+	userAccount: UserAccount | null
 	loading: boolean
 	signIn: (email: string, password: string) => Promise<{ error?: string }>
 	signOut: () => Promise<void>
@@ -22,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null)
 	const [userProfile, setUserProfile] = useState<TdrApplication | null>(null)
+	const [userAccount, setUserAccount] = useState<UserAccount | null>(null)
 	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
@@ -32,11 +40,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			} = await supabase.auth.getSession()
 			setUser(session?.user ?? null)
 
-			if (session?.user?.email) {
-				const profile = await getUserProfile(session.user.email)
-				setUserProfile(profile)
-			}
+			if (session?.user) {
+				// Get TDR profile for now (user_accounts table may not exist yet)
+				if (session.user.email) {
+					const profile = await getUserProfile(session.user.email)
+					setUserProfile(profile)
+				}
 
+				// Try to get user account, but don't fail if table doesn't exist
+				try {
+					const account = await getUserAccount(session.user.id)
+					setUserAccount(account)
+				} catch (error) {
+					console.log("User accounts table not ready yet:", error)
+					setUserAccount(null)
+				}
+			}
 			setLoading(false)
 		}
 
@@ -48,11 +67,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			setUser(session?.user ?? null)
 
-			if (session?.user?.email) {
-				const profile = await getUserProfile(session.user.email)
-				setUserProfile(profile)
+			if (session?.user) {
+				// Get TDR profile
+				if (session.user.email) {
+					const profile = await getUserProfile(session.user.email)
+					setUserProfile(profile)
+				}
+
+				// Try to get user account, but don't fail if table doesn't exist
+				try {
+					const account = await getUserAccount(session.user.id)
+					setUserAccount(account)
+				} catch (error) {
+					console.log("User accounts table not ready yet:", error)
+					setUserAccount(null)
+				}
 			} else {
 				setUserProfile(null)
+				setUserAccount(null)
 			}
 
 			setLoading(false)
@@ -80,6 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			})
 
 			if (error) {
+				// If user doesn't exist in auth but is approved, suggest sign up
+				if (error.message.includes("Invalid login credentials")) {
+					return {
+						error:
+							"Account not found. If you're approved, please create your account first by clicking 'Create account' below.",
+					}
+				}
 				return { error: error.message }
 			}
 
@@ -94,27 +133,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const signUp = async (email: string, password: string) => {
 		try {
 			setLoading(true)
+			console.log("Starting signup for:", email)
 
 			// Check if user is approved before allowing signup
 			const profile = await getUserProfile(email)
+			console.log("User profile found:", profile)
+
 			if (!profile) {
+				console.log("No approved profile found for:", email)
 				return {
 					error:
 						"Your application must be approved before you can create an account. Please contact admin.",
 				}
 			}
 
-			const { error } = await supabase.auth.signUp({
+			console.log("Attempting Supabase signup...")
+			const { data, error } = await supabase.auth.signUp({
 				email,
 				password,
+				options: {
+					emailRedirectTo: `${getSiteUrl()}/auth/callback?next=/dashboard`,
+				},
 			})
 
+			console.log("Supabase signup response:", { data, error })
+
 			if (error) {
+				console.error("Signup error:", error)
 				return { error: error.message }
+			}
+
+			// If user was created successfully but needs email confirmation
+			if (data.user && !data.session) {
+				console.log("User created, email confirmation required")
+				return {
+					error:
+						"Please check your email and click the confirmation link to complete your account setup.",
+				}
+			}
+
+			// If user was created and session exists (email confirmation disabled)
+			if (data.user && data.session) {
+				console.log("User created with immediate session")
+				return {}
 			}
 
 			return {}
 		} catch (error) {
+			console.error("Unexpected signup error:", error)
 			return { error: "An unexpected error occurred" }
 		} finally {
 			setLoading(false)
@@ -147,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const value = {
 		user,
 		userProfile,
+		userAccount,
 		loading,
 		signIn,
 		signOut,
