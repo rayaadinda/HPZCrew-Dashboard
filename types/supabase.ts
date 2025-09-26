@@ -1,6 +1,41 @@
 export type Database = {
 	public: {
 		Tables: {
+			user_accounts: {
+				Row: {
+					id: string
+					auth_user_id: string
+					tdr_application_id: string
+					email: string
+					instagram_handle: string | null
+					full_name: string | null
+					created_at: string
+					updated_at: string
+					is_active: boolean
+				}
+				Insert: {
+					id?: string
+					auth_user_id: string
+					tdr_application_id: string
+					email: string
+					instagram_handle?: string | null
+					full_name?: string | null
+					created_at?: string
+					updated_at?: string
+					is_active?: boolean
+				}
+				Update: {
+					id?: string
+					auth_user_id?: string
+					tdr_application_id?: string
+					email?: string
+					instagram_handle?: string | null
+					full_name?: string | null
+					created_at?: string
+					updated_at?: string
+					is_active?: boolean
+				}
+			}
 			tdr_applications: {
 				Row: {
 					id: string

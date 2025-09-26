@@ -4,6 +4,7 @@ import type { UgcContent } from "../types/database"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001"
 
 if (!supabaseUrl || !supabaseAnonKey) {
 	throw new Error("Missing Supabase environment variables")
@@ -16,7 +17,95 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 	},
 })
 
-export const getUserProfile = async (email: string) => {
+// Create user account for authenticated user
+export const createUserAccount = async (authUserId: string, email: string) => {
+	try {
+		// First, get the approved TDR application
+		const tdrApplication = await getUserProfile(email)
+		if (!tdrApplication) {
+			return {
+				success: false,
+				error: "No approved application found for this email",
+			}
+		}
+
+		// Check if user account already exists
+		const { data: existingAccount } = await supabase
+			.from("user_accounts")
+			.select("id")
+			.eq("auth_user_id", authUserId)
+			.single()
+
+		if (existingAccount) {
+			return { success: false, error: "User account already exists" }
+		}
+
+		// Create user account - cast to any to bypass TypeScript issues with new table
+		const { data, error } = await (supabase as any)
+			.from("user_accounts")
+			.insert({
+				auth_user_id: authUserId,
+				tdr_application_id: tdrApplication.id,
+				email: email,
+				instagram_handle: tdrApplication.instagram_handle || null,
+				full_name: tdrApplication.full_name || null,
+			})
+			.select()
+			.single()
+
+		if (error) {
+			console.error("Error creating user account:", error)
+			return { success: false, error: error.message }
+		}
+
+		return { success: true, user_account: data }
+	} catch (error) {
+		console.error("Unexpected error creating user account:", error)
+		return { success: false, error: "Unexpected error occurred" }
+	}
+}
+
+// Get site URL for auth redirects
+export const getSiteUrl = () => siteUrl
+
+// Get user account (combines auth user with TDR application data)
+export const getUserAccount = async (authUserId: string) => {
+	try {
+		const { data, error } = await supabase
+			.from("user_accounts")
+			.select(
+				`
+				*,
+				tdr_applications (*)
+			`
+			)
+			.eq("auth_user_id", authUserId)
+			.eq("is_active", true)
+			.single()
+
+		if (error) {
+			// If table doesn't exist yet, return null gracefully
+			if (
+				error.code === "PGRST116" ||
+				error.message.includes('relation "user_accounts" does not exist')
+			) {
+				console.log("User accounts table not created yet")
+				return null
+			}
+			console.error("Error fetching user account:", error)
+			return null
+		}
+
+		return data
+	} catch (error) {
+		console.error("Unexpected error fetching user account:", error)
+		return null
+	}
+}
+
+export const getUserProfile = async (
+	email: string
+): Promise<Database["public"]["Tables"]["tdr_applications"]["Row"] | null> => {
 	const { data, error } = await supabase
 		.from("tdr_applications")
 		.select("*")
