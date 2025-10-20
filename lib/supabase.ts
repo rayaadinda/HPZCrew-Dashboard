@@ -84,15 +84,46 @@ export const getUserAccount = async (authUserId: string) => {
 			.single()
 
 		if (error) {
-			// If table doesn't exist yet, return null gracefully
-			if (
-				error.code === "PGRST116" ||
-				error.message.includes('relation "user_accounts" does not exist')
-			) {
-				console.log("User accounts table not created yet")
+			// PGRST116 means no rows returned - this is normal, just no user account yet
+			if (error.code === "PGRST116") {
+				console.warn(
+					"⚠️ No user_account record found for auth_user_id:",
+					authUserId
+				)
+				console.info(
+					"💡 FIX: Run the SQL in supabase/FIX_NOW.sql to create missing user_account records"
+				)
 				return null
 			}
-			console.error("Error fetching user account:", error)
+
+			// If table doesn't exist
+			if (error.message.includes('relation "user_accounts" does not exist')) {
+				console.error("❌ user_accounts table doesn't exist!")
+				console.error(
+					"💡 FIX: Run migrations in supabase/migrations/001_create_user_accounts.sql"
+				)
+				return null
+			}
+
+			// RLS policy errors
+			if (
+				error.code === "42501" ||
+				error.message.includes("permission denied")
+			) {
+				console.error("❌ RLS policy blocking access:", {
+					code: error.code,
+					message: error.message,
+				})
+
+				return null
+			}
+
+			// Other errors
+			console.error("❌ Unexpected error:", {
+				code: error.code,
+				message: error.message,
+				details: error.details,
+			})
 			return null
 		}
 

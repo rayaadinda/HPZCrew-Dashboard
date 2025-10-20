@@ -146,24 +146,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			return {
 				name: "HPZ Crew Member",
 				email: "crew@hpz.com",
-				avatar: "/avatars/crew.jpg",
+				avatar: "",
 			}
 		}
 
 		// Get user's initials for avatar fallback from full_name
 		const fullName = userProfile.full_name || userProfile.email || "Crew Member"
-		const initials = fullName
-			.split(' ')
-			.filter(word => word.length > 0)
-			.map(word => word[0])
-			.join('')
-			.substring(0, 2)
-			.toUpperCase() || "CN"
+		const initials =
+			fullName
+				.split(" ")
+				.filter((word) => word.length > 0)
+				.map((word) => word[0])
+				.join("")
+				.substring(0, 2)
+				.toUpperCase() || "CN"
 
 		return {
 			name: userProfile.full_name || userProfile.email || "Crew Member",
 			email: userProfile.email || user.email || "crew@hpz.com",
-			avatar: "/avatars/crew.jpg", // No avatar_url field in database yet
+			avatar: "", // No avatar_url field in database yet
 			initials,
 		}
 	}

@@ -3,7 +3,7 @@
 import { useAuth } from "../hooks/useAuth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface ProtectedRouteProps {
 	children: React.ReactNode
@@ -21,10 +21,33 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
 	if (loading) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gray-50">
-				<div className="text-center">
-					<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-					<p className="text-gray-600">Loading...</p>
+			<div className="min-h-screen flex items-center justify-center p-4 bg-background">
+				<div className="w-full max-w-5xl space-y-6">
+					{/* Header skeleton */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<Skeleton className="h-10 w-10 rounded-lg" />
+							<Skeleton className="h-6 w-32" />
+						</div>
+						<div className="flex items-center gap-3">
+							<Skeleton className="h-8 w-8 rounded-full" />
+							<Skeleton className="h-8 w-24" />
+						</div>
+					</div>
+
+					{/* Main content skeleton */}
+					<div className="grid gap-6 md:grid-cols-3">
+						<Skeleton className="h-32 rounded-lg" />
+						<Skeleton className="h-32 rounded-lg" />
+						<Skeleton className="h-32 rounded-lg" />
+					</div>
+
+					<div className="grid gap-6 md:grid-cols-2">
+						<Skeleton className="h-64 rounded-lg" />
+						<Skeleton className="h-64 rounded-lg" />
+					</div>
+
+					<Skeleton className="h-96 rounded-lg" />
 				</div>
 			</div>
 		)
@@ -32,10 +55,33 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
 	if (!user || !userProfile) {
 		return (
-			<div className="min-h-screen flex items-center justify-center bg-gray-50">
-				<div className="text-center">
-					<Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-					<p className="text-gray-600">Redirecting...</p>
+			<div className="min-h-screen flex items-center justify-center p-4 bg-background">
+				<div className="w-full max-w-5xl space-y-6">
+					{/* Header skeleton */}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-4">
+							<Skeleton className="h-10 w-10 rounded-lg" />
+							<Skeleton className="h-6 w-32" />
+						</div>
+						<div className="flex items-center gap-3">
+							<Skeleton className="h-8 w-8 rounded-full" />
+							<Skeleton className="h-8 w-24" />
+						</div>
+					</div>
+
+					{/* Main content skeleton */}
+					<div className="grid gap-6 md:grid-cols-3">
+						<Skeleton className="h-32 rounded-lg" />
+						<Skeleton className="h-32 rounded-lg" />
+						<Skeleton className="h-32 rounded-lg" />
+					</div>
+
+					<div className="grid gap-6 md:grid-cols-2">
+						<Skeleton className="h-64 rounded-lg" />
+						<Skeleton className="h-64 rounded-lg" />
+					</div>
+
+					<Skeleton className="h-96 rounded-lg" />
 				</div>
 			</div>
 		)

@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import {
 	supabase,
 	getUserProfile,
@@ -31,8 +32,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [userProfile, setUserProfile] = useState<TdrApplication | null>(null)
 	const [userAccount, setUserAccount] = useState<UserAccount | null>(null)
 	const [loading, setLoading] = useState(true)
+	const [mounted, setMounted] = useState(false)
 
 	useEffect(() => {
+		setMounted(true)
+	}, [])
+
+	useEffect(() => {
+		// Only run auth logic after component is mounted
+		if (!mounted) return
+
 		// Get initial session
 		const getInitialSession = async () => {
 			const {
@@ -79,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					const account = await getUserAccount(session.user.id)
 					setUserAccount(account)
 				} catch (error) {
-					console.log("User accounts table not ready yet:", error)
+					// Silently fail - using tdr_applications as fallback
 					setUserAccount(null)
 				}
 			} else {
@@ -91,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		})
 
 		return () => subscription.unsubscribe()
-	}, [])
+	}, [mounted])
 
 	const signIn = async (email: string, password: string) => {
 		try {
@@ -214,11 +223,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		user,
 		userProfile,
 		userAccount,
-		loading,
+		loading: loading || !mounted,
 		signIn,
 		signOut,
 		signUp,
 		resetPassword,
+	}
+
+	// Show loading state until component is mounted to prevent hydration mismatch
+	if (!mounted) {
+		return (
+			<AuthContext.Provider value={value}>
+				<div className="flex items-center justify-center min-h-screen">
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+				</div>
+			</AuthContext.Provider>
+		)
 	}
 
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
