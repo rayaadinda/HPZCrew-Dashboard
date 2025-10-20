@@ -1,26 +1,42 @@
 "use client"
 
-import { ProtectedRoute } from "../components/ProtectedRoute"
-import { UserProfile } from "../components/UserProfile"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 
-export default function Home() {
-	return (
-		<ProtectedRoute>
-			<div className="min-h-screen bg-gray-50">
-				<div className="container mx-auto px-4 py-8">
-					<div className="mb-8">
-						<h1 className="text-3xl font-bold text-gray-900 mb-2">
-							Welcome to HPZ Crew Dashboard
-						</h1>
-						<p className="text-gray-600">
-							Your personalized dashboard for tracking performance,
-							achievements, and crew activities.
-						</p>
-					</div>
+export default function HomePage() {
+	const router = useRouter()
+	const { user, loading } = useAuth()
 
-					<UserProfile />
+	useEffect(() => {
+		if (!loading) {
+			if (user) {
+				// User is authenticated, redirect to dashboard
+				router.push("/dashboard")
+			} else {
+				// User is not authenticated, redirect to auth
+				router.push("/auth")
+			}
+		}
+	}, [user, loading, router])
+
+	// Show loading state while checking authentication
+	if (loading) {
+		return (
+			<div className="flex min-h-screen items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+					<p className="text-muted-foreground">Loading...</p>
 				</div>
 			</div>
-		</ProtectedRoute>
+		)
+	}
+
+	return (
+		<div className="flex min-h-screen items-center justify-center">
+			<div className="text-center">
+				<p className="text-muted-foreground">Redirecting...</p>
+			</div>
+		</div>
 	)
 }

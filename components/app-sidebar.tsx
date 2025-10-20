@@ -12,8 +12,7 @@ import {
 	IconUser,
 	IconUsers,
 	IconBrandInstagram,
-	IconList,
-	IconChartLine,
+	IconMessageChatbot,
 } from "@tabler/icons-react"
 import Link from "next/link"
 
@@ -21,6 +20,7 @@ import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+import { useAuth } from "@/hooks/useAuth"
 import {
 	Sidebar,
 	SidebarContent,
@@ -31,12 +31,8 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
-	user: {
-		name: "HPZ Crew Member",
-		email: "crew@hpz.com",
-		avatar: "/avatars/crew.jpg",
-	},
+// Static navigation data
+const navData = {
 	navMain: [
 		{
 			title: "Dashboard",
@@ -62,6 +58,11 @@ const data = {
 			title: "Achievements",
 			url: "/dashboard/achievements",
 			icon: IconAward,
+		},
+		{
+			title: "Chatbot",
+			url: "/dashboard/chatbot",
+			icon: IconMessageChatbot,
 		},
 	],
 	navClouds: [
@@ -137,6 +138,33 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+	const { userProfile, user } = useAuth()
+
+	// Format user data for display
+	const formatUserData = () => {
+		if (!user || !userProfile) {
+			return {
+				name: "HPZ Crew Member",
+				email: "crew@hpz.com",
+				avatar: "/avatars/crew.jpg",
+			}
+		}
+
+		// Get user's initials for avatar fallback
+		const initials = userProfile.first_name && userProfile.last_name
+			? `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase()
+			: userProfile.email?.substring(0, 2).toUpperCase() || "CN"
+
+		return {
+			name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || userProfile.email || "Crew Member",
+			email: userProfile.email || user.email || "crew@hpz.com",
+			avatar: userProfile.avatar_url || "/avatars/crew.jpg",
+			initials,
+		}
+	}
+
+	const userData = formatUserData()
+
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
@@ -155,12 +183,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				<NavMain items={data.navMain} />
-				<NavDocuments items={data.documents} />
-				<NavSecondary items={data.navSecondary} className="mt-auto" />
+				<NavMain items={navData.navMain} />
+				<NavDocuments items={navData.documents} />
+				<NavSecondary items={navData.navSecondary} className="mt-auto" />
 			</SidebarContent>
 			<SidebarFooter>
-				<NavUser user={data.user} />
+				<NavUser user={userData} />
 			</SidebarFooter>
 		</Sidebar>
 	)

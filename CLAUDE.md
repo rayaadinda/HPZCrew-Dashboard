@@ -2,9 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+DONT EVER PUT ANY COMMANTS LINE TO CODEBASE IN THIS PROJECT.
+
 ## Project Overview
 
-This is a **Next.js 15** crew dashboard application for **HPZ (Honda Performance Zone)**, built as a modern TypeScript-based web application. It serves as a personalized dashboard for approved HPZ crew members to track their performance, achievements, and content contributions.
+This is a **Next.js 15** crew dashboard application for **HPZ (High Performance Zone)**, built as a modern TypeScript-based web application. It serves as a personalized dashboard for approved HPZ crew members to track their performance, achievements, and content contributions.
 
 ## Core Technologies
 
@@ -23,17 +25,20 @@ This is a **Next.js 15** crew dashboard application for **HPZ (Honda Performance
 ## Architecture Patterns
 
 ### Authentication-first Design
+
 - **Approval-based Access**: Only users with `status = 'approved'` in `tdr_applications` can register
 - **Progressive Authentication**: Sign up → Email verification → Full access
 - **Context-based Auth**: `AuthProvider` wraps entire app with auth state
 - **Route Protection**: `ProtectedRoute` component guards all dashboard pages
 
 ### Database-driven Architecture
+
 - **Supabase as Backend**: PostgreSQL database with real-time capabilities
 - **Type Safety**: Full TypeScript types generated from database schema in `/types/supabase.ts`
 - **Key Tables**: `tdr_applications` (user profiles), `ugc_content` (user content), `user_accounts` (auth mapping)
 
 ### Component Composition
+
 - **shadcn/ui Foundation**: Accessible, unstyled Radix UI components in `/components/ui/` with "new-york" style
 - **Design System**: Consistent styling with Tailwind CSS v4, stone theme, and dark mode support
 - **Variant System**: Class Variance Authority for component variants
@@ -65,18 +70,21 @@ npm start
 ## Important Configuration Details
 
 ### Authentication Flow
+
 1. User submits application through `/components/LoginForm.tsx`
 2. Admin approval updates `tdr_applications.status = 'approved'`
 3. User receives email verification link
 4. After verification, user gets full dashboard access
 
 ### Database Schema
+
 - User profiles stored in `tdr_applications` with HPZ-specific fields (motorcycle ownership, racing experience)
 - Content tracking in `ugc_content` for social media submissions
 - Rate limiting via `submission_rate_limit` table
 - User account mapping in `user_accounts`
 
 ### Styling System
+
 - Tailwind CSS v4 with inline configuration in `app/globals.css`
 - OKLCH color space for better color consistency
 - Dark mode support via `@custom-variant`
@@ -85,6 +93,7 @@ npm start
 ## Development Guidelines
 
 ### Adding New Features
+
 1. Update TypeScript types in `/types/` first
 2. Add database functions to `/lib/supabase.ts`
 3. Create components in `/components/` following existing patterns
@@ -92,6 +101,7 @@ npm start
 5. Update auth context if user state changes are needed
 
 ### Component Development
+
 - Use shadcn/ui components from `/components/ui/` (Radix UI primitives with stone theme)
 - Follow existing component patterns with proper TypeScript typing
 - Implement loading states and error handling
@@ -100,6 +110,7 @@ npm start
 - Follow kebab-case naming for component files (`app-sidebar.tsx`, `chart-area-interactive.tsx`)
 
 ### Database Operations
+
 - All database operations go through `/lib/supabase.ts`
 - Use generated types for type safety
 - Implement proper error handling for missing tables/data
