@@ -31,7 +31,6 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// Static navigation data
 const navData = {
 	navMain: [
 		{
@@ -140,7 +139,6 @@ const navData = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const { userProfile, user } = useAuth()
 
-	// Format user data for display
 	const formatUserData = () => {
 		if (!user || !userProfile) {
 			return {
@@ -150,7 +148,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			}
 		}
 
-		// Get user's initials for avatar fallback from full_name
 		const fullName = userProfile.full_name || userProfile.email || "Crew Member"
 		const initials =
 			fullName
@@ -164,7 +161,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 		return {
 			name: userProfile.full_name || userProfile.email || "Crew Member",
 			email: userProfile.email || user.email || "crew@hpz.com",
-			avatar: "", // No avatar_url field in database yet
+			avatar: "",
 			initials,
 		}
 	}

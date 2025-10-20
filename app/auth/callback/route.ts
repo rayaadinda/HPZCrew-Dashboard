@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
 				)
 			}
 
-			// Successful authentication - redirect to next page
 			return NextResponse.redirect(`${requestUrl.origin}${next}`)
 		} catch (error) {
 			console.error("Unexpected error in auth callback:", error)
@@ -36,7 +35,6 @@ export async function GET(request: NextRequest) {
 		}
 	}
 
-	// No code provided - redirect to auth with error
 	return NextResponse.redirect(
 		`${requestUrl.origin}/auth?error=no_code_provided`
 	)

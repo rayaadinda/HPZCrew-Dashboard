@@ -41,7 +41,6 @@ import {
 	IconChevronDown,
 } from "@tabler/icons-react"
 
-// Mock leaderboard data - this would come from your API/database
 const leaderboardData = {
 	allTime: [
 		{

@@ -176,7 +176,6 @@ export default function ProfilePage() {
 	}, [userProfile])
 
 	const handleSave = () => {
-		// Here you would save the data to your backend
 		console.log("Saving profile data:", editData)
 		setIsEditing(false)
 	}
@@ -199,7 +198,6 @@ export default function ProfilePage() {
 		)
 	}
 
-	// Generate user badges based on stats
 	const userBadges = []
 	if (userStats) {
 		if (userStats.approvalRate >= 80) userBadges.push("top-performer")

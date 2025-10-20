@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import {
 	Card,
 	CardContent,
@@ -22,6 +24,7 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import DiscordLinkButton from "@/components/discord-link-button"
 import {
 	IconBell,
 	IconShield,
@@ -44,7 +47,6 @@ import {
 	IconGlobe,
 } from "@tabler/icons-react"
 
-// Mock settings data
 const settingsData = {
 	account: {
 		email: "alex.rivera@email.com",
@@ -132,8 +134,55 @@ function getAppearanceDescription(key: string): string {
 }
 
 export default function SettingsPage() {
+	const searchParams = useSearchParams()
 	const [settings, setSettings] = useState(settingsData)
 	const [hasChanges, setHasChanges] = useState(false)
+
+	// Handle Discord OAuth callback
+	useEffect(() => {
+		const discordSuccess = searchParams.get('discord_success')
+		const discordError = searchParams.get('discord_error')
+
+		if (discordSuccess === 'true') {
+			toast.success('Discord account linked successfully!')
+			// Clean up URL
+			window.history.replaceState({}, '', '/dashboard/settings')
+		}
+
+		if (discordError) {
+			let errorMessage = 'Failed to link Discord account'
+
+			switch (discordError) {
+				case 'access_denied':
+					errorMessage = 'You cancelled the Discord authorization'
+					break
+				case 'no_code':
+					errorMessage = 'No authorization code received from Discord'
+					break
+				case 'token_exchange_failed':
+					errorMessage = 'Failed to authenticate with Discord'
+					break
+				case 'user_info_failed':
+					errorMessage = 'Failed to retrieve Discord user information'
+					break
+				case 'link_failed':
+					errorMessage = 'Failed to link Discord account to your profile'
+					break
+				case 'no_user_email':
+					errorMessage = 'User email not found for linking'
+					break
+				case 'unexpected_error':
+					errorMessage = 'An unexpected error occurred'
+					break
+				default:
+					errorMessage = `Discord linking error: ${discordError}`
+			}
+
+			toast.error(errorMessage)
+			// Clean up URL
+			window.history.replaceState({}, '', '/dashboard/settings')
+		}
+	}, [searchParams])
 
 	const updateSetting = (category: string, key: string, value: any) => {
 		setSettings((prev) => ({
@@ -353,6 +402,9 @@ export default function SettingsPage() {
 										</div>
 									</CardContent>
 								</Card>
+
+								{/* Discord Integration */}
+								<DiscordLinkButton />
 
 								<Card>
 									<CardHeader>

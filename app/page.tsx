@@ -12,16 +12,13 @@ export default function HomePage() {
 	useEffect(() => {
 		if (!loading) {
 			if (user) {
-				// User is authenticated, redirect to dashboard
 				router.push("/dashboard")
 			} else {
-				// User is not authenticated, redirect to auth
 				router.push("/auth")
 			}
 		}
 	}, [user, loading, router])
 
-	// Show loading state while checking authentication
 	if (loading) {
 		return (
 			<div className="flex min-h-screen items-center justify-center p-4">

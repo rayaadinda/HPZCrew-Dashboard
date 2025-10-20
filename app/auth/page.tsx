@@ -88,7 +88,6 @@ export default function AuthPage() {
 	if (loading) {
 		return (
 			<div className="min-h-screen flex p-4 bg-black">
-				{/* Left side skeleton */}
 				<div className="hidden lg:flex lg:w-1/2 relative rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
 					<div className="relative z-10 flex flex-col items-center justify-center w-full px-12">
 						<Skeleton className="w-32 h-32 rounded-full mb-8 bg-gray-700" />
@@ -104,7 +103,6 @@ export default function AuthPage() {
 					</div>
 				</div>
 
-				{/* Right side skeleton */}
 				<div className="w-full lg:w-1/2 flex items-center justify-center bg-black p-8">
 					<div className="w-full max-w-md space-y-6">
 						<div className="space-y-2">

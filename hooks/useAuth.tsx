@@ -39,10 +39,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, [])
 
 	useEffect(() => {
-		// Only run auth logic after component is mounted
 		if (!mounted) return
 
-		// Get initial session
 		const getInitialSession = async () => {
 			const {
 				data: { session },
@@ -50,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			setUser(session?.user ?? null)
 
 			if (session?.user) {
-				// Get TDR profile for now (user_accounts table may not exist yet)
 				if (session.user.email) {
 					const profile = await getUserProfile(session.user.email)
 					setUserProfile(profile)

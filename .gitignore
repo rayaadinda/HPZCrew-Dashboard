@@ -9,8 +9,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-
 # testing
+/hpz-chatbot-backend
 /coverage
 
 # next.js

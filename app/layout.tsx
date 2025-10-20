@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { AuthProvider } from "../hooks/useAuth"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -30,6 +31,7 @@ export default function RootLayout({
 				suppressHydrationWarning
 			>
 				<AuthProvider>{children}</AuthProvider>
+				<Toaster position="top-right" />
 			</body>
 		</html>
 	)

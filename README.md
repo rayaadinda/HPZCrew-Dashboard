@@ -9,6 +9,7 @@ A comprehensive **Next.js 15** crew dashboard application for **HPZ (High Perfor
 - **Multi-step Auth Flow**: Application → Admin Approval → Email Verification → Dashboard Access
 - **Protected Routes**: All dashboard pages require authentication
 - **Real-time Session Management**: Automatic token refresh through Supabase
+- **Discord Integration**: Link Discord accounts for bot features with OAuth2
 
 ### Dashboard & Analytics
 - **Performance Tracking**: Monitor crew member achievements and metrics

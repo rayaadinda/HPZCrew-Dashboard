@@ -303,7 +303,6 @@ export default function AchievementsPage() {
 		<div className="flex flex-1 flex-col">
 			<div className="@container/main flex flex-1 flex-col gap-2">
 				<div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-					{/* Header */}
 					<div className="px-4 lg:px-6">
 						<div className="flex items-center justify-between">
 							<div>
@@ -319,7 +318,6 @@ export default function AchievementsPage() {
 						</div>
 					</div>
 
-					{/* Status Cards */}
 					<div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-3">
 						<Card className="@container/card">
 							<CardHeader>
@@ -366,7 +364,6 @@ export default function AchievementsPage() {
 						</Card>
 					</div>
 
-					{/* Main Content */}
 					<div className="px-4 lg:px-6">
 						<Tabs defaultValue="tiers" className="space-y-4">
 							<TabsList className="grid w-full grid-cols-4">

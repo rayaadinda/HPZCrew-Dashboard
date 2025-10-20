@@ -55,6 +55,10 @@ export type Database = {
 					portfolio_filename: string
 					status: "pending" | "approved" | "rejected"
 					notes: string
+					discord_id: string | null
+					discord_username: string | null
+					discord_discriminator: string | null
+					updated_at: string | null
 				}
 				Insert: {
 					id?: string
@@ -74,6 +78,10 @@ export type Database = {
 					portfolio_filename?: string
 					status?: "pending" | "approved" | "rejected"
 					notes?: string
+					discord_id?: string | null
+					discord_username?: string | null
+					discord_discriminator?: string | null
+					updated_at?: string | null
 				}
 				Update: {
 					id?: string
@@ -93,6 +101,10 @@ export type Database = {
 					portfolio_filename?: string
 					status?: "pending" | "approved" | "rejected"
 					notes?: string
+					discord_id?: string | null
+					discord_username?: string | null
+					discord_discriminator?: string | null
+					updated_at?: string | null
 				}
 			}
 			ugc_content: {
