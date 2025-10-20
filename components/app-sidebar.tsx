@@ -150,15 +150,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			}
 		}
 
-		// Get user's initials for avatar fallback
-		const initials = userProfile.first_name && userProfile.last_name
-			? `${userProfile.first_name[0]}${userProfile.last_name[0]}`.toUpperCase()
-			: userProfile.email?.substring(0, 2).toUpperCase() || "CN"
+		// Get user's initials for avatar fallback from full_name
+		const fullName = userProfile.full_name || userProfile.email || "Crew Member"
+		const initials = fullName
+			.split(' ')
+			.filter(word => word.length > 0)
+			.map(word => word[0])
+			.join('')
+			.substring(0, 2)
+			.toUpperCase() || "CN"
 
 		return {
-			name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || userProfile.email || "Crew Member",
+			name: userProfile.full_name || userProfile.email || "Crew Member",
 			email: userProfile.email || user.email || "crew@hpz.com",
-			avatar: userProfile.avatar_url || "/avatars/crew.jpg",
+			avatar: "/avatars/crew.jpg", // No avatar_url field in database yet
 			initials,
 		}
 	}
