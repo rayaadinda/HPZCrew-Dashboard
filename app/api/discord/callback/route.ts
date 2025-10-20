@@ -6,6 +6,9 @@ export async function GET(request: NextRequest) {
 	const error = requestUrl.searchParams.get('error')
 	const state = requestUrl.searchParams.get('state')
 
+	// For debugging
+	console.log('Discord callback received:', { code: !!code, error, state })
+
 	// Handle OAuth errors
 	if (error) {
 		console.error('Discord OAuth error:', error)
@@ -61,14 +64,34 @@ export async function GET(request: NextRequest) {
 
 		const discordUser = await userResponse.json()
 
-		// Get user email from state (stored during OAuth initiation)
-		const userEmail = state ? decodeURIComponent(state) : null
+		// Get user email from multiple sources
+		let userEmail: string | null = null
+
+		// Method 1: Try state parameter first
+		if (state) {
+			try {
+				userEmail = decodeURIComponent(state)
+				console.log('Got email from state parameter:', userEmail)
+			} catch (e) {
+				console.error('Failed to decode state parameter:', e)
+			}
+		}
+
+		// Method 2: Try to get from cookie/session if state fails
 		if (!userEmail) {
-			console.error('No user email found in state')
+			// This won't work in API route, but let's log it
+			console.error('No user email found in state parameter')
+		}
+
+		// Method 3: Create a simple fallback mechanism
+		if (!userEmail) {
+			console.error('CRITICAL: No user email available for Discord linking')
 			return NextResponse.redirect(
-				`${requestUrl.origin}/dashboard/settings?discord_error=no_user_email`
+				`${requestUrl.origin}/dashboard/settings?discord_error=no_user_email&reason=state_missing`
 			)
 		}
+
+		console.log('Retrieved user email for Discord linking:', userEmail)
 
 		// Link Discord account in database
 		const linkResponse = await fetch(`${requestUrl.origin}/api/discord/link`, {
