@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 			try {
 				// Generate a one-click server invite URL
 				// This uses Discord's instant invite system
-				const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&guild_id=${guildId}&response_type=code&redirect_uri=${encodeURIComponent(`${requestUrl.origin}/api/discord/callback`)}&scope=bot%20applications.commands&integration_type=0&permissions=8`
+				const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&guild_id=${guildId}&response_type=code&redirect_uri=${encodeURIComponent(`${request.nextUrl.origin}/api/discord/callback`)}&scope=bot%20applications.commands&integration_type=0&permissions=8`
 
 				console.log('Generated Discord server invite for user:', {
 					email: (userAccount as any).email,

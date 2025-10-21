@@ -1,6 +1,18 @@
 import { supabase } from '@/lib/supabase'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Define the user account type with Discord fields
+interface UserAccountWithDiscord {
+	id: string;
+	email: string;
+	full_name?: string;
+	discord_id?: string;
+	discord_username?: string;
+	discord_discriminator?: string;
+	discord_linked_at?: string;
+	// Add other fields as needed
+}
+
 export async function POST(request: NextRequest) {
 	try {
 		console.log('=== Find User By Email API Called ===')
@@ -38,19 +50,22 @@ export async function POST(request: NextRequest) {
 			)
 		}
 
+		// Type assertion to fix TypeScript error
+		const userAccountTyped = userAccount as UserAccountWithDiscord
+
 		// Check if user is already linked to Discord
-		if (userAccount.discord_id) {
+		if (userAccountTyped.discord_id) {
 			console.log('User already has Discord linked:', {
-				existingDiscordId: userAccount.discord_id,
+				existingDiscordId: userAccountTyped.discord_id,
 				newDiscordId: discordId
 			})
 
-			if (userAccount.discord_id !== discordId) {
+			if (userAccountTyped.discord_id !== discordId) {
 				return NextResponse.json(
 					{
 						success: false,
 						error: 'This email is already linked to a different Discord account',
-						existingDiscordUsername: userAccount.discord_username
+						existingDiscordUsername: userAccountTyped.discord_username
 					},
 					{ status: 409 }
 				)
@@ -59,8 +74,8 @@ export async function POST(request: NextRequest) {
 					{
 						success: true,
 						message: 'Discord account already linked',
-						userEmail: userAccount.email,
-						discordUsername: userAccount.discord_username,
+						userEmail: userAccountTyped.email,
+						discordUsername: userAccountTyped.discord_username,
 						alreadyLinked: true
 					}
 				)
@@ -72,8 +87,8 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({
 			success: true,
 			message: 'User found and eligible for Discord linking',
-			userEmail: userAccount.email,
-			fullName: userAccount.full_name,
+			userEmail: userAccountTyped.email,
+			fullName: userAccountTyped.full_name,
 			alreadyLinked: false
 		})
 
