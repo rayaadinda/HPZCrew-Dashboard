@@ -144,41 +144,67 @@ export default function SettingsPage() {
 		const discordError = searchParams.get('discord_error')
 
 		if (discordSuccess === 'true') {
-			toast.success('Discord account linked successfully!')
+			// Check if there's an invite URL in the URL parameters
+			const inviteUrl = searchParams.get('invite_url')
+			if (inviteUrl) {
+				// Store the invite for later use
+				sessionStorage.setItem('discord_pending_invite', decodeURIComponent(inviteUrl))
+			}
+
+			toast.success('Discord account linked successfully! 🎉')
+
+			// Auto-redirect to server invite after a short delay if we have one
+			if (inviteUrl) {
+				setTimeout(() => {
+					const pendingInvite = sessionStorage.getItem('discord_pending_invite')
+					if (pendingInvite) {
+						sessionStorage.removeItem('discord_pending_invite')
+						window.open(decodeURIComponent(inviteUrl), '_blank')
+						toast.success('Opening your HPZ Discord server invite...')
+					}
+				}, 2000)
+			}
+
 			// Clean up URL
 			window.history.replaceState({}, '', '/dashboard/settings')
 		}
 
 		if (discordError) {
-			let errorMessage = 'Failed to link Discord account'
+		const discordDetails = searchParams.get('details')
+		let errorMessage = 'Failed to link Discord account'
 
-			switch (discordError) {
-				case 'access_denied':
-					errorMessage = 'You cancelled the Discord authorization'
-					break
-				case 'no_code':
-					errorMessage = 'No authorization code received from Discord'
-					break
-				case 'token_exchange_failed':
-					errorMessage = 'Failed to authenticate with Discord'
-					break
-				case 'user_info_failed':
-					errorMessage = 'Failed to retrieve Discord user information'
-					break
-				case 'link_failed':
-					errorMessage = 'Failed to link Discord account to your profile'
-					break
-				case 'no_user_email':
-					errorMessage = 'User email not found for linking'
-					break
-				case 'unexpected_error':
-					errorMessage = 'An unexpected error occurred'
-					break
-				default:
-					errorMessage = `Discord linking error: ${discordError}`
-			}
+		switch (discordError) {
+			case 'access_denied':
+				errorMessage = 'You cancelled the Discord authorization'
+				break
+			case 'no_code':
+				errorMessage = 'No authorization code received from Discord'
+				break
+			case 'token_exchange_failed':
+				errorMessage = 'Failed to authenticate with Discord'
+				break
+			case 'user_info_failed':
+				errorMessage = 'Failed to retrieve Discord user information'
+				break
+			case 'link_failed':
+				errorMessage = `Failed to link Discord account${discordDetails ? `: ${discordDetails}` : ''}. Check server logs for details.`
+				break
+			case 'no_user_email':
+				errorMessage = 'User email not found for linking'
+				break
+			case 'unexpected_error':
+				errorMessage = 'An unexpected error occurred'
+				break
+			default:
+				errorMessage = `Discord linking error: ${discordError}`
+		}
 
-			toast.error(errorMessage)
+		toast.error(errorMessage)
+		console.error('Discord linking error details:', {
+			error: discordError,
+			details: discordDetails,
+			fullMessage: errorMessage
+		})
 			// Clean up URL
 			window.history.replaceState({}, '', '/dashboard/settings')
 		}

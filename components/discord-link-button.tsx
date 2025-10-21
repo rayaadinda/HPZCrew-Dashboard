@@ -55,7 +55,7 @@ export default function DiscordLinkButton({
 		setError(null)
 
 		try {
-			// Generate Discord OAuth URL
+			// Generate Discord OAuth URL with enhanced permissions for bot features
 			const siteUrl =
 				process.env.NEXT_PUBLIC_SITE_URL ||
 				"https://hpz-crew-dashboard.vercel.app/"
@@ -69,7 +69,7 @@ export default function DiscordLinkButton({
 				`${siteUrl}/api/discord/callback`
 			)
 			discordAuthUrl.searchParams.set("response_type", "code")
-			discordAuthUrl.searchParams.set("scope", "identify email")
+			discordAuthUrl.searchParams.set("scope", "identify email guilds.join")
 			discordAuthUrl.searchParams.set(
 				"state",
 				encodeURIComponent(userProfile?.email || "")
@@ -81,7 +81,11 @@ export default function DiscordLinkButton({
 			// Store user email in sessionStorage for the callback
 			if (userProfile?.email) {
 				sessionStorage.setItem("discord_link_user_email", userProfile.email)
+				sessionStorage.setItem("discord_link_timestamp", Date.now().toString())
 			}
+
+			// Show loading message
+			toast.loading("Connecting to Discord...", { id: "discord-link" })
 
 			// Redirect to Discord OAuth
 			window.location.href = discordAuthUrl.toString()
@@ -128,6 +132,46 @@ export default function DiscordLinkButton({
 			toast.error(errorMessage)
 		} finally {
 			setLoading(false)
+		}
+	}
+
+	// Handle Discord server invite - Enhanced to check for invite from linking process
+	const handleJoinDiscordServer = async () => {
+		try {
+			// Check if we have a pending invite from the linking process
+			const pendingInvite = sessionStorage.getItem("discord_pending_invite")
+			if (pendingInvite) {
+				sessionStorage.removeItem("discord_pending_invite")
+				window.open(pendingInvite, "_blank")
+				toast.success("Welcome! Opening your HPZ Discord server invite...")
+				return
+			}
+
+			// Generate fresh invite if no pending one
+			const response = await fetch("/api/discord/generate-invite", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					userId: userProfile?.id || userProfile?.email,
+					discordUsername: userProfile?.discord_username,
+				}),
+			})
+
+			const data = await response.json()
+
+			if (data.success && data.inviteUrl) {
+				// Open Discord invite in new tab
+				window.open(data.inviteUrl, "_blank")
+				toast.success("Opening HPZ Discord server invite...")
+			} else {
+				throw new Error(data.error || "Failed to generate Discord invite")
+			}
+		} catch (error) {
+			console.error("Discord invite error:", error)
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to join Discord server"
+			setError(errorMessage)
+			toast.error(errorMessage)
 		}
 	}
 
@@ -218,8 +262,22 @@ export default function DiscordLinkButton({
 						</div>
 					)}
 
+					{/* Discord Server Invite Button - Only show when Discord is linked */}
+					{isDiscordLinked && (
+						<div className="mt-4">
+							<Button
+								onClick={handleJoinDiscordServer}
+								variant="outline"
+								className="w-full justify-start gap-2"
+							>
+								Join HPZ Discord Server
+							</Button>
+						</div>
+					)}
+
 					<div className="text-xs text-muted-foreground space-y-1">
 						<p>• Linking your account enables HPZ bot commands</p>
+						<p>• Join the Discord server to access bot features</p>
 						<p>• You can unlink your account at any time</p>
 						<p>• We only access your basic Discord profile information</p>
 					</div>
