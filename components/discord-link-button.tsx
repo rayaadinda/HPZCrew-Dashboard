@@ -135,41 +135,16 @@ export default function DiscordLinkButton({
 		}
 	}
 
-	// Handle Discord server invite - Enhanced to check for invite from linking process
+	// Handle Discord server invite - Uses regular Discord invite link
 	const handleJoinDiscordServer = async () => {
 		try {
-			// Check if we have a pending invite from the linking process
-			const pendingInvite = sessionStorage.getItem("discord_pending_invite")
-			if (pendingInvite) {
-				sessionStorage.removeItem("discord_pending_invite")
-				window.open(pendingInvite, "_blank")
-				toast.success("Welcome! Opening your HPZ Discord server invite...")
-				return
-			}
-
-			// Generate fresh invite if no pending one
-			const response = await fetch("/api/discord/generate-invite", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					userId: userProfile?.id || userProfile?.email,
-					discordUsername: userProfile?.discord_username,
-				}),
-			})
-
-			const data = await response.json()
-
-			if (data.success && data.inviteUrl) {
-				// Open Discord invite in new tab
-				window.open(data.inviteUrl, "_blank")
-				toast.success("Opening HPZ Discord server invite...")
-			} else {
-				throw new Error(data.error || "Failed to generate Discord invite")
-			}
+			// Open regular Discord server invite
+			window.open("https://discord.com/invite/cvp9upTU", "_blank")
+			toast.success("Opening HPZ Discord server invite...")
 		} catch (error) {
 			console.error("Discord invite error:", error)
 			const errorMessage =
-				error instanceof Error ? error.message : "Failed to join Discord server"
+				error instanceof Error ? error.message : "Failed to open Discord server invite"
 			setError(errorMessage)
 			toast.error(errorMessage)
 		}
