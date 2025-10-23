@@ -46,9 +46,12 @@ export default function ChatbotPage() {
 	const [isLoading, setIsLoading] = useState(false)
 	const [availableCommands, setAvailableCommands] = useState<Command[]>([])
 	const [showCommandHelp, setShowCommandHelp] = useState(false)
+	const [showCommandSuggestions, setShowCommandSuggestions] = useState(false)
+	const [filteredCommands, setFilteredCommands] = useState<Command[]>([])
 	const backendUrl =
 		process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"
 	const messagesEndRef = useRef<HTMLDivElement>(null)
+	const inputRef = useRef<HTMLInputElement>(null)
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -67,11 +70,49 @@ export default function ChatbotPage() {
 		])
 	}, [])
 
+	// Handle input change and command suggestions
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value
+		setInputValue(value)
+
+		// Show command suggestions when "/" is typed
+		if (value.startsWith("/")) {
+			const searchTerm = value.slice(1).toLowerCase()
+			const filtered = availableCommands.filter((cmd) =>
+				cmd.command.toLowerCase().includes(searchTerm)
+			)
+			setFilteredCommands(filtered)
+			setShowCommandSuggestions(true)
+		} else {
+			setShowCommandSuggestions(false)
+		}
+	}
+
+	// Select a command from suggestions
+	const selectCommand = (command: string) => {
+		setInputValue(command)
+		setShowCommandSuggestions(false)
+		inputRef.current?.focus()
+	}
+
 	const fetchCommands = async () => {
+		// Default commands
+		const defaultCommands: Command[] = [
+			{ command: "/misi", description: "Lihat misi aktif" },
+			{ command: "/poinku", description: "Cek poin kamu" },
+			{ command: "/tierku", description: "Info tier kamu" },
+			{ command: "/faq", description: "Pertanyaan umum" },
+			{ command: "/upgrade", description: "Cara naik tier" },
+			{ command: "/hubungiadmin", description: "Kontak admin" },
+		]
+
 		try {
 			const token = (await supabase.auth.getSession())?.data.session
 				?.access_token
-			if (!token) return
+			if (!token) {
+				setAvailableCommands(defaultCommands)
+				return
+			}
 
 			const response = await fetch(`${backendUrl}/api/chat/commands`, {
 				headers: {
@@ -81,10 +122,13 @@ export default function ChatbotPage() {
 
 			if (response.ok) {
 				const data = await response.json()
-				setAvailableCommands(data.commands || [])
+				setAvailableCommands(data.commands || defaultCommands)
+			} else {
+				setAvailableCommands(defaultCommands)
 			}
 		} catch (error) {
 			console.error("Failed to fetch commands:", error)
+			setAvailableCommands(defaultCommands)
 		}
 	}
 
@@ -107,6 +151,7 @@ export default function ChatbotPage() {
 
 		setMessages((prev) => [...prev, userMessage])
 		setInputValue("")
+		setShowCommandSuggestions(false)
 		setIsLoading(true)
 
 		try {
@@ -163,7 +208,9 @@ export default function ChatbotPage() {
 	}
 
 	const handleKeyPress = (e: React.KeyboardEvent) => {
-		if (e.key === "Enter" && !e.shiftKey) {
+		if (e.key === "Escape") {
+			setShowCommandSuggestions(false)
+		} else if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault()
 			sendMessage()
 		}
@@ -248,117 +295,143 @@ export default function ChatbotPage() {
 					)}
 
 					{/* Chat Messages */}
-					<div className="px-4 lg:px-6 flex-1">
-						<Card className="h-[calc(100vh-280px)] flex flex-col">
-							<CardHeader className="pb-3">
-								<CardTitle className="text-lg flex items-center gap-2">
-									<IconMessageCircle className="size-5" />
-									Chat Assistant
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="flex-1 flex flex-col p-0">
-								<ScrollArea className="flex-1 p-4">
-									<div className="space-y-4">
-										{messages.map((message) => (
-											<div
-												key={message.id}
-												className={`flex gap-3 ${
-													message.type === "user"
-														? "justify-end"
-														: "justify-start"
-												}`}
-											>
-												{message.type !== "user" && (
-													<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-														{message.type === "command" ? (
-															<IconCommand className="size-4 text-primary-foreground" />
-														) : (
-															<IconBolt className="size-4 text-primary-foreground" />
-														)}
-													</div>
+					<div className="flex-1 overflow-hidden bg-white dark:bg-neutral-900">
+						<ScrollArea className="h-[calc(100vh-320px)] px-4 lg:px-6 py-6">
+							<div className="space-y-6 max-w-4xl mx-auto pb-4">
+								{messages.map((message) => (
+									<div
+										key={message.id}
+										className={`flex gap-3 items-end ${
+											message.type === "user" ? "justify-end" : "justify-start"
+										}`}
+									>
+										{message.type !== "user" && (
+											<div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
+												{message.type === "command" ? (
+													<IconBolt className="size-5 text-primary-foreground" />
+												) : (
+													<IconBolt className="size-5 text-primary-foreground" />
 												)}
-
-												<div
-													className={`max-w-[75%] rounded-lg p-4 ${
-														message.type === "user"
-															? "bg-primary text-primary-foreground"
-															: message.type === "command"
-															? "bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800"
-															: "bg-muted"
-													}`}
-												>
-													{message.type === "user" ? (
-														<p className="text-sm whitespace-pre-wrap">
-															{message.content}
-														</p>
-													) : (
-														<div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-headings:my-2">
-															<ReactMarkdown remarkPlugins={[remarkGfm]}>
-																{message.content}
-															</ReactMarkdown>
-														</div>
-													)}
-													<p className="text-xs opacity-70 mt-2 pt-2 border-t border-current/10">
-														{formatTimestamp(message.timestamp)}
-													</p>
-												</div>
-
-												{message.type === "user" && (
-													<div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-														<IconUser className="size-4 text-secondary-foreground" />
-													</div>
-												)}
-											</div>
-										))}
-
-										{isLoading && (
-											<div className="flex gap-3 justify-start">
-												<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-													<IconBolt className="size-4 text-primary-foreground" />
-												</div>
-												<div className="bg-muted rounded-lg p-3">
-													<div className="flex items-center gap-2">
-														<IconLoader2 className="size-4 animate-spin" />
-														<span className="text-sm">Mengetik...</span>
-													</div>
-												</div>
 											</div>
 										)}
 
-										<div ref={messagesEndRef} />
-									</div>
-								</ScrollArea>
+										<div className="flex flex-col gap-1 max-w-[75%]">
+											<div
+												className={`px-4 py-3 ${
+													message.type === "user"
+														? "bg-neutral-700 dark:bg-neutral-700 text-white rounded-3xl"
+														: message.type === "command"
+														? "bg-orange-50 dark:bg-orange-900/30 text-foreground rounded-3xl"
+														: "bg-neutral-100 dark:bg-neutral-800 text-foreground rounded-3xl"
+												}`}
+											>
+												{message.type === "user" ? (
+													<p className="text-sm whitespace-pre-wrap leading-relaxed">
+														{message.content}
+													</p>
+												) : (
+													<div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-headings:my-2 prose-strong:font-semibold">
+														<ReactMarkdown remarkPlugins={[remarkGfm]}>
+															{message.content}
+														</ReactMarkdown>
+													</div>
+												)}
+											</div>
+											<p
+												className={`text-xs text-muted-foreground px-2 ${
+													message.type === "user" ? "text-right" : "text-left"
+												}`}
+											>
+												{formatTimestamp(message.timestamp)}
+											</p>
+										</div>
 
-								{/* Input Area */}
-								<div className="border-t p-4">
-									<div className="flex gap-2">
-										<Input
-											value={inputValue}
-											onChange={(e) => setInputValue(e.target.value)}
-											onKeyPress={handleKeyPress}
-											placeholder="Ketik pesan atau perintah (misal: /misi)..."
-											disabled={isLoading}
-											className="flex-1"
-										/>
-										<Button
-											onClick={sendMessage}
-											disabled={!inputValue.trim() || isLoading}
-											size="icon"
-										>
-											{isLoading ? (
-												<IconLoader2 className="size-4 animate-spin" />
-											) : (
-												<IconSend className="size-4" />
-											)}
-										</Button>
+										{message.type === "user" && (
+											<div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-neutral-500 to-neutral-600 flex items-center justify-center shadow-md">
+												<IconUser className="size-5 text-white" />
+											</div>
+										)}
 									</div>
-									<div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-										<IconBulb className="size-3" />
-										<span>Gunakan / untuk melihat perintah yang tersedia</span>
+								))}
+
+								{isLoading && (
+									<div className="flex gap-3 items-end justify-start">
+										<div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
+											<IconBolt className="size-5 text-primary-foreground" />
+										</div>
+										<div className="bg-neutral-100 dark:bg-neutral-800 rounded-3xl px-4 py-3">
+											<div className="flex items-center gap-2">
+												<IconLoader2 className="size-4 animate-spin text-primary" />
+												<span className="text-sm">Mengetik...</span>
+											</div>
+										</div>
+									</div>
+								)}
+
+								<div ref={messagesEndRef} />
+							</div>
+						</ScrollArea>
+					</div>
+
+					<div className="px-4 lg:px-6 py-4 bg-white dark:bg-neutral-900 relative">
+						<div className="max-w-4xl mx-auto">
+							{/* Command Suggestions Dropdown */}
+							{showCommandSuggestions && filteredCommands.length > 0 && (
+								<div className="absolute bottom-full left-4 right-4 mb-2 max-w-4xl mx-auto bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-lg overflow-hidden z-50">
+									<div className="max-h-64 overflow-y-auto">
+										{filteredCommands.map((cmd, index) => (
+											<button
+												key={index}
+												onClick={() => selectCommand(cmd.command)}
+												className="w-full px-4 py-3 text-left hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors border-b border-neutral-100 dark:border-neutral-700 last:border-0"
+											>
+												<div className="flex items-center gap-3">
+													<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+														<IconCommand className="size-4 text-primary" />
+													</div>
+													<div className="flex-1 min-w-0">
+														<div className="font-mono text-sm font-medium text-foreground">
+															{cmd.command}
+														</div>
+														<div className="text-xs text-muted-foreground truncate">
+															{cmd.description}
+														</div>
+													</div>
+												</div>
+											</button>
+										))}
 									</div>
 								</div>
-							</CardContent>
-						</Card>
+							)}
+
+							<div className="flex gap-3 relative">
+								<Input
+									ref={inputRef}
+									value={inputValue}
+									onChange={handleInputChange}
+									onKeyPress={handleKeyPress}
+									placeholder="Ketik pesan atau perintah (misal: /misi)..."
+									disabled={isLoading}
+									className="flex-1 h-11 bg-neutral-100 dark:bg-neutral-800 border-0 focus-visible:ring-1 focus-visible:ring-primary rounded-full"
+								/>
+								<Button
+									onClick={sendMessage}
+									disabled={!inputValue.trim() || isLoading}
+									size="icon"
+									className="h-11 w-11 rounded-full"
+								>
+									{isLoading ? (
+										<IconLoader2 className="size-5 animate-spin" />
+									) : (
+										<IconSend className="size-5" />
+									)}
+								</Button>
+							</div>
+							<div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+								<IconBulb className="size-4 text-primary" />
+								<span>Gunakan / untuk melihat perintah yang tersedia</span>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
